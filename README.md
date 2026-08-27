@@ -1,3 +1,5 @@
+![hero](assets/hero.png)
+
 # Copilot Rubber Duck CLI
 
 CLI tool that brings VS Code 1.135's new Rubber Duck feature to the terminal: get a second opinion from a complementary model on any code file, diff, or PR.
