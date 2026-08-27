@@ -1,0 +1,16 @@
+{
+  "name": "copilot-rubber-duck-cli",
+  "version": "1.0.0",
+  "description": "Get a second opinion from a complementary model on any code — VS Code 1.135 Rubber Duck for the terminal",
+  "main": "src/index.js",
+  "bin": {
+    "rubber-duck": "src/cli.js"
+  },
+  "type": "module",
+  "keywords": ["copilot", "rubber-duck", "code-review", "ai", "multi-model"],
+  "author": "jrubiosainz",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
