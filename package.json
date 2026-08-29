@@ -1,16 +1,12 @@
 {
   "name": "copilot-rubber-duck-cli",
   "version": "1.0.0",
-  "description": "Get a second opinion from a complementary model on any code — VS Code 1.135 Rubber Duck for the terminal",
-  "main": "src/index.js",
-  "bin": {
-    "rubber-duck": "src/cli.js"
-  },
+  "description": "CLI to automate Rubber Duck dual-model reviews via AHP (VS Code 1.135)",
   "type": "module",
-  "keywords": ["copilot", "rubber-duck", "code-review", "ai", "multi-model"],
-  "author": "jrubiosainz",
+  "bin": {
+    "rubber-duck": "./bin/cli.js"
+  },
+  "keywords": ["copilot", "rubber-duck", "ahp", "code-review", "dual-model"],
   "license": "MIT",
-  "engines": {
-    "node": ">=18"
-  }
+  "author": "jrubiosainz"
 }

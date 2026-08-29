@@ -1,110 +1,97 @@
-![hero](assets/hero.png)
-
 # Copilot Rubber Duck CLI
 
-CLI tool that brings VS Code 1.135's new Rubber Duck feature to the terminal: get a second opinion from a complementary model on any code file, diff, or PR.
+CLI to automate VS Code 1.135's new Rubber Duck dual-model reviews via the Agent Host Protocol (AHP).
 
-## Why
+## What is Rubber Duck?
 
-VS Code 1.135 (August 26, 2026) introduced Rubber Duck, an experimental feature that asks a second model to review the primary agent's work and surface missed details or edge cases. But it only works inside VS Code's Agents window.
+VS Code 1.135 (released August 26, 2026) introduced **Rubber Duck** — an experimental feature that gets a second opinion from a complementary model on your agent's work. It surfaces missed details, edge cases, and subtle bugs that a single model might overlook.
 
-This CLI brings the same concept everywhere: terminal, CI pipelines, pre-commit hooks, code review workflows.
+This CLI brings that capability to your terminal and CI pipelines.
 
 ## How it works
 
-1. You point it at a file, diff, or directory
-2. It sends the code to a primary model for analysis
-3. It sends the same code + the primary analysis to a secondary (complementary) model
-4. The secondary model acts as "rubber duck" — challenging assumptions, finding edge cases, surfacing what the first model missed
-5. You get a structured report with both perspectives
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Your Code  │────▶│  Primary Model   │────▶│   Findings A    │
+│             │     │  (e.g. GPT-5.5)  │     │                 │
+└─────────────┘     └──────────────────┘     └────────┬────────┘
+       │                                              │
+       │            ┌──────────────────┐              │  Compare
+       └───────────▶│  Rubber Duck     │──────────────┤
+                    │  (e.g. Claude)   │              ▼
+                    └──────────────────┘     ┌─────────────────┐
+                                            │  Merged Report  │
+                                            │  + Exclusives   │
+                                            └─────────────────┘
+```
+
+Two models review the same code independently. The CLI compares their findings and highlights what the "rubber duck" caught that the primary missed.
 
 ## Install
 
 ```bash
-npm install -g copilot-rubber-duck-cli
-# or run directly
-npx copilot-rubber-duck-cli review src/auth.ts
+git clone https://github.com/jrubiosainz/copilot-rubber-duck-cli.git
+cd copilot-rubber-duck-cli
+chmod +x bin/cli.js
 ```
 
 ## Usage
 
 ```bash
 # Review a single file
-rubber-duck review src/server.ts
+rubber-duck review src/auth.js --focus security
 
-# Review a git diff
-rubber-duck diff HEAD~3
+# Side-by-side comparison (show only disagreements)
+rubber-duck compare lib/parser.ts --diff
 
-# Review with specific model pair
-rubber-duck review src/api.ts --primary gpt-4.1 --secondary claude-opus-4
+# Batch review with markdown report
+rubber-duck batch "src/**/*.js" --format markdown -o report.md
 
-# Review and output JSON
-rubber-duck review src/main.py --format json
+# List available model pairs
+rubber-duck models
 
-# Review a whole directory
-rubber-duck review src/ --recursive
-
-# Strict mode: fail CI if issues found
-rubber-duck review src/ --strict --exit-code
+# Custom model pairing
+rubber-duck review app.py --primary gpt-5.5 --secondary gemini-2.5-pro
 ```
 
-## Model Pairs
+## Options
 
-The default pairing uses complementary model families for maximum coverage:
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--host <url>` | AHP WebSocket endpoint | `ws://localhost:4040` |
+| `--primary <model>` | Primary reviewer model | From AHP session |
+| `--secondary <model>` | Rubber Duck model | From AHP session |
+| `--focus <area>` | `bugs`, `perf`, `security`, `edge-cases`, `all` | `all` |
+| `--format <fmt>` | `terminal`, `markdown`, `json` | `terminal` |
+| `--diff` | Show only disagreements | `false` |
+| `-o <file>` | Write report to file | stdout |
 
-| Primary | Secondary | Why |
-|---------|-----------|-----|
-| GPT-4.1 | Claude Opus 4 | Different training, different blind spots |
-| Claude Opus 4 | GPT-4.1 | Reverse perspective |
-| GPT-5.5 | Gemini 2.5 Pro | Frontier cross-check |
+## Focus areas
 
-## Output
+- **bugs** — Logical errors, null risks, incorrect control flow
+- **perf** — Unnecessary allocations, O(n²) loops, missing caching
+- **security** — Injection, path traversal, prototype pollution, secrets
+- **edge-cases** — Empty inputs, concurrency, overflow, Unicode, timezones
 
-```
-== Rubber Duck Review: src/auth.ts ==
+## Demo mode
 
-[Primary Analysis - GPT-4.1]
-- Auth token validation looks correct
-- Rate limiting properly implemented
-- Session cleanup on expiry: OK
+When no AHP host is available, the CLI runs in demo mode with simulated dual-model output — useful for exploring the interface and integrating into scripts before connecting to a live agent host.
 
-[Rubber Duck Challenge - Claude Opus 4]
-! Token refresh race condition on line 47:
-  concurrent requests during refresh window could both
-  trigger rotation, invalidating the first token.
-! Missing constant-time comparison for token validation (line 23)
-  Current string equality is vulnerable to timing attacks.
-+ Agree: rate limiting implementation is solid.
+## Why dual-model review matters
 
-[Verdict]
-2 issues surfaced by rubber duck review
-1 agreement confirmed
-```
+Single-model code review has blind spots. Each model family has different training data and reasoning patterns. By pairing two complementary models:
 
-## Configuration
+- GPT excels at pattern matching and common bug detection
+- Claude tends to catch subtle logical issues and edge cases
+- Gemini brings strong reasoning about type systems and concurrency
 
-Create `.rubber-duck.yml` in your project root:
+The Rubber Duck approach is not about which model is "better" — it is about coverage. Two independent reviewers catch more than one.
 
-```yaml
-primary: gpt-4.1
-secondary: claude-opus-4
-ignore:
-  - "**/*.test.ts"
-  - "vendor/"
-focus:
-  - security
-  - error-handling
-  - concurrency
-strict: false
-```
+## Requirements
 
-## CI Integration
-
-```yaml
-# GitHub Actions
-- name: Rubber Duck Review
-  run: npx copilot-rubber-duck-cli diff ${{ github.event.pull_request.base.sha }} --strict --exit-code
-```
+- Node.js 20+
+- VS Code 1.135+ with Agent Host enabled (for live mode)
+- Optional: `ws` npm package for WebSocket connectivity
 
 ## License
 
