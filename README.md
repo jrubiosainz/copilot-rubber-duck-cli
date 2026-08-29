@@ -1,3 +1,5 @@
+![hero](assets/hero.png)
+
 # Copilot Rubber Duck CLI
 
 CLI to automate VS Code 1.135's new Rubber Duck dual-model reviews via the Agent Host Protocol (AHP).
